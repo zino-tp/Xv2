@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zworld</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #111;
+            color: #eee;
+            margin: 0;
+            padding: 0;
+            text-align: center;
+            position: relative;
+        }
+        #header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background-color: #222;
+            padding: 10px;
+            border-bottom: 2px solid #ff4d4d;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.5);
+        }
+        #usernameDisplay {
+            color: #ff4d4d;
+            font-size: 0.8em;
+            margin: 0;
+            position: absolute;
+            left: 10px;
+            top: 10px;
+            text-align: left;
+        }
+        button {
+            background-color: #222;
+            color: #eee;
+            border: 2px solid #ff4d4d;
+            padding: 10px 20px;
+            margin: 10px;
+            cursor: pointer;
+            font-size: 1em;
+            text-transform: uppercase;
+            border-radius: 5px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.5);
+            transition: background-color 0.3s, transform 0.3s;
+        }
+        button:hover {
+            background-color: #333;
+            border-color: #ff3333;
+            transform: scale(1.05);
+        }
+        button:active {
+            background-color: #111;
+            border-color: #cc0000;
+            transform: scale(0.95);
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.8);
+        }
+        .modal-content {
+            background-color: #2c2c2c;
+            margin: 10% auto;
+            padding: 20px;
+            border: 2px solid #ff4d4d;
+            width: 80%;
+            max-width: 500px;
+            color: #eee;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.7);
+        }
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            transition: color 0.3s;
+        }
+        .close:hover,
+        .close:focus {
+            color: #fff;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        input, textarea {
+            width: calc(100% - 22px);
+            padding: 10px;
+            background-color: #333;
+            color: #eee;
+            border: 2px solid #555;
+            border-radius: 5px;
+            box-sizing: border-box;
+            margin-bottom: 10px;
+        }
+        textarea {
+            height: 100px;
+        }
+        #tweetsContainer {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            max-height: 50vh;
+            overflow-y: auto;
+            background-color: #222;
+            padding: 10px;
+            box-shadow: 0 -4px 8px rgba(0,0,0,0.5);
+        }
+        .tweet {
+            background-color: #2c2c2c;
+            border: 2px solid #444;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.5);
+            cursor: pointer;
+            position: relative;
+        }
+        .tweet-title {
+            font-weight: bold;
+            color: #ff4d4d;
+            font-size: 0.9em;
+            margin: 0;
+            cursor: pointer;
+        }
+        .tweet-content {
+            display: none;
+            margin-top: 10px;
+            color: #eee;
+        }
+        .tweet-content img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 5px;
+        }
+        .tweet-content video {
+            max-width: 100%;
+            height: auto;
+            border-radius: 5px;
+        }
+        #chatContainer {
+            display: none;
+            margin-top: 20px;
+        }
+        #chatOptions {
+            margin-top: 20px;
+        }
+        #chatOptions button {
+            margin: 10px;
+        }
+        #chatModal .chat-content {
+            display: flex;
+            flex-direction: column;
+            height: 300px;
+            overflow-y: scroll;
+            background-color: #333;
+            padding: 10px;
+            border-radius: 5px;
+            border: 2px solid #555;
+        }
+        .chat-message {
+            margin-bottom: 10px;
+        }
+        .chat-message span {
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div id="header">
+        <span id="usernameDisplay">Username: Not logged in</span>
+        <button id="profileBtn">Profile</button>
+        <h1>Zworld💀</h1>
+        <p>Inspired by X.</p>
+        <button id="loginBtn">Login</button>
+        <button id="registerBtn">Register</button>
+        <button id="createTweetBtn">Create Tweet</button>
+    </div>
+
+    <!-- Chat Container -->
+    <div id="chatContainer">
+        <div id="chatOptions">
+            <button id="privateChatBtn">Private Chat</button>
+            <button id="globalChatBtn">Global Chat</button>
+        </div>
+    </div>
+
+    <!-- Tweets Container -->
+    <div id="tweetsContainer"></div>
+
+    <!-- Login Modal -->
+    <div id="loginModal" class="modal">
+        <div class="modal-content">
+            <span id="closeLoginModal" class="close">&times;</span>
+            <h2>Login</h2>
+            <form id="loginForm">
+                <label for="loginUsername">Username:</label>
+                <input type="text" id="loginUsername" required><br>
+                <label for="loginPassword">Password:</label>
+                <input type="password" id="loginPassword" required><br>
+                <button type="submit">Login</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Register Modal -->
+    <div id="registerModal" class="modal">
+        <div class="modal-content">
+            <span id="closeRegisterModal" class="close">&times;</span>
+            <h2>Register</h2>
+            <form id="registerForm">
+                <label for="registerUsername">Username:</label>
+                <input type="text" id="registerUsername" required><br>
+                <label for="registerEmail">Email:</label>
+                <input type="email" id="registerEmail" required><br>
+                <label for="registerPassword">Password:</label>
+                <input type="password" id="registerPassword" required><br>
+                <button type="submit">Register</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Create Tweet Modal -->
+    <div id="tweetModal" class="modal">
+        <div class="modal-content">
+            <span id="closeTweetModal" class="close">&times;</span>
+            <h2>Create a Tweet</h2>
+            <form id="tweetForm">
+                <label for="tweetTitle">Title:</label>
+                <input type="text" id="tweetTitle" required><br>
+                <label for="tweetContent">Tweet:</label>
+                <textarea id="tweetContent" required></textarea><br>
+                <label for="tweetImage">Image:</label>
+                <input type="file" id="tweetImage" accept="image/*"><br>
+                <label for="tweetVideo">Video:</label>
+                <input type="file" id="tweetVideo" accept="video/*"><br>
+                <button type="submit">Post</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Profile Modal -->
+    <div id="profileModal" class="modal">
+        <div class="modal-content">
+            <span id="closeProfileModal" class="close">&times;</span>
+            <h2>Profile</h2>
+            <p id="profileUsername">Username: Not logged in</p>
+            <button id="logoutBtn">Log Out</button>
+            <button id="chatBtn">Chat</button>
+        </div>
+    </div>
+
+    <!-- Chat Modal -->
+    <div id="chatModal" class="modal">
+        <div class="modal-content">
+            <span id="closeChatModal" class="close">&times;</span>
+            <h2>Chat</h2>
+            <div id="chatOptions">
+                <button id="startPrivateChatBtn">Start Private Chat</button>
+                <button id="startGlobalChatBtn">Start Global Chat</button>
+            </div>
+            <div id="privateChat" class="chat-content">
+                <input type="text" id="privateChatUsername" placeholder="Enter username">
+                <button id="sendPrivateRequestBtn">Send Request</button>
+                <div id="privateChatMessages"></div>
+            </div>
+            <div id="globalChat" class="chat-content">
+                <div id="globalChatMessages"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const USERS_KEY = 'users';
+        const TWEETS_KEY = 'tweets';
+        const CHATS_KEY = 'chats';
+
+        let loggedInUser = null;
+
+        function showModal(modal) {
+            modal.style.display = 'block';
+        }
+
+        function hideModal(modal) {
+            modal.style.display = 'none';
+        }
+
+        function saveUsers(users) {
+            localStorage.setItem(USERS_KEY, JSON.stringify(users));
+        }
+
+        function loadUsers() {
+            return JSON.parse(localStorage.getItem(USERS_KEY)) || {};
+        }
+
+        function saveTweets(tweets) {
+            localStorage.setItem(TWEETS_KEY, JSON.stringify(tweets));
+        }
+
+        function loadTweets() {
+            return JSON.parse(localStorage.getItem(TWEETS_KEY)) || [];
+        }
+
+        function saveChats(chats) {
+            localStorage.setItem(CHATS_KEY, JSON.stringify(chats));
+        }
+
+        function loadChats() {
+            return JSON.parse(localStorage.getItem(CHATS_KEY)) || {};
+        }
+
+        // Register functionality
+        document.getElementById('registerForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const username = document.getElementById('registerUsername').value;
+            const email = document.getElementById('registerEmail').value;
+            const password = document.getElementById('registerPassword').value;
+            const users = loadUsers();
+
+            if (users[username]) {
+                alert('Username already exists!');
+                return;
+            }
+
+            users[username] = { email, password };
+            saveUsers(users);
+            alert('Registration successful!');
+            hideModal(document.getElementById('registerModal'));
+        });
+
+        // Login functionality
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const username = document.getElementById('loginUsername').value;
+            const password = document.getElementById('loginPassword').value;
+            const users = loadUsers();
+
+            if (users[username] && users[username].password === password) {
+                loggedInUser = username;
+                document.getElementById('usernameDisplay').textContent = `Username: ${loggedInUser}`;
+                alert('Login successful!');
+                hideModal(document.getElementById('loginModal'));
+                displayTweets();
+                return;
+            }
+
+            alert('Invalid username or password!');
+        });
+
+        // Create tweet functionality
+        document.getElementById('tweetForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            if (!loggedInUser) {
+                alert('You must be logged in to post a tweet.');
+                return;
+            }
+
+            const title = document.getElementById('tweetTitle').value;
+            const content = document.getElementById('tweetContent').value;
+            const image = document.getElementById('tweetImage').files[0];
+            const video = document.getElementById('tweetVideo').files[0];
+            const tweets = loadTweets();
+            const tweet = {
+                username: loggedInUser,
+                title,
+                content,
+                image: image ? URL.createObjectURL(image) : null,
+                video: video ? URL.createObjectURL(video) : null,
+                timestamp: Date.now()
+            };
+
+            tweets.push(tweet);
+            saveTweets(tweets);
+            alert('Tweet posted!');
+            hideModal(document.getElementById('tweetModal'));
+            displayTweets();
+        });
+
+        // Display tweets
+        function displayTweets() {
+            const tweets = loadTweets();
+            const tweetsContainer = document.getElementById('tweetsContainer');
+            tweetsContainer.innerHTML = '';
+
+            tweets.forEach(tweet => {
+                const tweetElement = document.createElement('div');
+                tweetElement.className = 'tweet';
+                tweetElement.innerHTML = `
+                    <div class="tweet-title" onclick="toggleContent(this)">${tweet.title}</div>
+                    <div class="tweet-content">
+                        <p>${tweet.content}</p>
+                        ${tweet.image ? `<img src="${tweet.image}" alt="Tweet Image">` : ''}
+                        ${tweet.video ? `<video controls src="${tweet.video}"></video>` : ''}
+                        <p>Posted by ${tweet.username} at ${new Date(tweet.timestamp).toLocaleString()}</p>
+                    </div>
+                `;
+                tweetsContainer.appendChild(tweetElement);
+            });
+
+            // Scroll to the bottom of the tweets container
+            tweetsContainer.scrollTop = tweetsContainer.scrollHeight;
+        }
+
+        function toggleContent(element) {
+            const content = element.nextElementSibling;
+            content.style.display = content.style.display === 'block' ? 'none' : 'block';
+        }
+
+        document.getElementById('profileBtn').addEventListener('click', () => {
+            if (loggedInUser) {
+                document.getElementById('profileUsername').textContent = `Username: ${loggedInUser}`;
+                showModal(document.getElementById('profileModal'));
+            } else {
+                alert('You must be logged in to view the profile.');
+            }
+        });
+
+        document.getElementById('logoutBtn').addEventListener('click', () => {
+            loggedInUser = null;
+            document.getElementById('usernameDisplay').textContent = 'Username: Not logged in';
+            alert('Logged out!');
+            hideModal(document.getElementById('profileModal'));
+        });
+
+        document.getElementById('createTweetBtn').addEventListener('click', () => {
+            if (loggedInUser) {
+                showModal(document.getElementById('tweetModal'));
+            } else {
+                alert('You must be logged in to post a tweet.');
+            }
+        });
+
+        document.getElementById('chatBtn').addEventListener('click', () => {
+            if (loggedInUser) {
+                showModal(document.getElementById('chatModal'));
+            } else {
+                alert('You must be logged in to use the chat feature.');
+            }
+        });
+
+        document.getElementById('startPrivateChatBtn').addEventListener('click', () => {
+            document.getElementById('privateChat').style.display = 'block';
+            document.getElementById('globalChat').style.display = 'none';
+        });
+
+        document.getElementById('startGlobalChatBtn').addEventListener('click', () => {
+            document.getElementById('privateChat').style.display = 'none';
+            document.getElementById('globalChat').style.display = 'block';
+            displayGlobalChat();
+        });
+
+        document.getElementById('sendPrivateRequestBtn').addEventListener('click', () => {
+            const requestUsername = document.getElementById('privateChatUsername').value;
+            const chats = loadChats();
+            const users = loadUsers();
+
+            if (!users[requestUsername]) {
+                alert('User not found!');
+                return;
+            }
+
+            if (!chats[loggedInUser]) {
+                chats[loggedInUser] = { requests: [], conversations: {} };
+            }
+
+            chats[loggedInUser].requests.push(requestUsername);
+            saveChats(chats);
+
+            alert(`Request sent to ${requestUsername}`);
+            document.getElementById('privateChatUsername').value = '';
+        });
+
+        function displayGlobalChat() {
+            const chats = loadChats();
+            const globalChatMessages = document.getElementById('globalChatMessages');
+            globalChatMessages.innerHTML = '';
+
+            Object.keys(chats).forEach(user => {
+                chats[user].conversations.forEach(message => {
+                    const messageElement = document.createElement('div');
+                    messageElement.className = 'chat-message';
+                    messageElement.innerHTML = `<span>${user}:</span> ${message}`;
+                    globalChatMessages.appendChild(messageElement);
+                });
+            });
+        }
+
+        document.getElementById('closeLoginModal').addEventListener('click', () => hideModal(document.getElementById('loginModal')));
+        document.getElementById('closeRegisterModal').addEventListener('click', () => hideModal(document.getElementById('registerModal')));
+        document.getElementById('closeTweetModal').addEventListener('click', () => hideModal(document.getElementById('tweetModal')));
+        document.getElementById('closeProfileModal').addEventListener('click', () => hideModal(document.getElementById('profileModal')));
+        document.getElementById('closeChatModal').addEventListener('click', () => hideModal(document.getElementById('chatModal')));
+
+        // Initial display of tweets
+        displayTweets();
+
+        // Show modals when buttons are clicked
+        document.getElementById('loginBtn').addEventListener('click', () => showModal(document.getElementById('loginModal')));
+        document.getElementById('registerBtn').addEventListener('click', () => showModal(document.getElementById('registerModal')));
+    </script>
+</body>
+</html>
