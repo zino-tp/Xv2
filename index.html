@@ -178,19 +178,11 @@
     <div id="header">
         <span id="usernameDisplay">Username: Not logged in</span>
         <button id="profileBtn">Profile</button>
-        <h1>Zworld💀</h1>
+        <h1>Zworld🍀</h1>
         <p>Inspired by X.</p>
         <button id="loginBtn">Login</button>
         <button id="registerBtn">Register</button>
         <button id="createTweetBtn">Create Tweet</button>
-    </div>
-
-    <!-- Chat Container -->
-    <div id="chatContainer">
-        <div id="chatOptions">
-            <button id="privateChatBtn">Private Chat</button>
-            <button id="globalChatBtn">Global Chat</button>
-        </div>
     </div>
 
     <!-- Tweets Container -->
@@ -228,21 +220,21 @@
         </div>
     </div>
 
-    <!-- Create Tweet Modal -->
+    <!-- Tweet Modal -->
     <div id="tweetModal" class="modal">
         <div class="modal-content">
             <span id="closeTweetModal" class="close">&times;</span>
-            <h2>Create a Tweet</h2>
+            <h2>Create Tweet</h2>
             <form id="tweetForm">
                 <label for="tweetTitle">Title:</label>
                 <input type="text" id="tweetTitle" required><br>
-                <label for="tweetContent">Tweet:</label>
+                <label for="tweetContent">Content:</label>
                 <textarea id="tweetContent" required></textarea><br>
                 <label for="tweetImage">Image:</label>
                 <input type="file" id="tweetImage" accept="image/*"><br>
                 <label for="tweetVideo">Video:</label>
                 <input type="file" id="tweetVideo" accept="video/*"><br>
-                <button type="submit">Post</button>
+                <button type="submit">Post Tweet</button>
             </form>
         </div>
     </div>
@@ -253,8 +245,7 @@
             <span id="closeProfileModal" class="close">&times;</span>
             <h2>Profile</h2>
             <p id="profileUsername">Username: Not logged in</p>
-            <button id="logoutBtn">Log Out</button>
-            <button id="chatBtn">Chat</button>
+            <button id="logoutBtn">Logout</button>
         </div>
     </div>
 
@@ -279,10 +270,7 @@
     </div>
 
     <script>
-        const USERS_KEY = 'users';
-        const TWEETS_KEY = 'tweets';
-        const CHATS_KEY = 'chats';
-
+        const API_URL = 'http://localhost:3000/api/tweets';
         let loggedInUser = null;
 
         function showModal(modal) {
@@ -293,47 +281,24 @@
             modal.style.display = 'none';
         }
 
-        function saveUsers(users) {
-            localStorage.setItem(USERS_KEY, JSON.stringify(users));
-        }
-
-        function loadUsers() {
-            return JSON.parse(localStorage.getItem(USERS_KEY)) || {};
-        }
-
-        function saveTweets(tweets) {
-            localStorage.setItem(TWEETS_KEY, JSON.stringify(tweets));
-        }
-
-        function loadTweets() {
-            return JSON.parse(localStorage.getItem(TWEETS_KEY)) || [];
-        }
-
-        function saveChats(chats) {
-            localStorage.setItem(CHATS_KEY, JSON.stringify(chats));
-        }
-
-        function loadChats() {
-            return JSON.parse(localStorage.getItem(CHATS_KEY)) || {};
-        }
-
         // Register functionality
         document.getElementById('registerForm').addEventListener('submit', function(e) {
             e.preventDefault();
             const username = document.getElementById('registerUsername').value;
             const email = document.getElementById('registerEmail').value;
             const password = document.getElementById('registerPassword').value;
-            const users = loadUsers();
 
-            if (users[username]) {
-                alert('Username already exists!');
-                return;
-            }
-
-            users[username] = { email, password };
-            saveUsers(users);
-            alert('Registration successful!');
-            hideModal(document.getElementById('registerModal'));
+            fetch(API_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, email, password })
+            }).then(response => response.json())
+              .then(data => {
+                  alert('Registration successful!');
+                  hideModal(document.getElementById('registerModal'));
+              }).catch(error => {
+                  alert('Registration failed.');
+              });
         });
 
         // Login functionality
@@ -341,72 +306,76 @@
             e.preventDefault();
             const username = document.getElementById('loginUsername').value;
             const password = document.getElementById('loginPassword').value;
-            const users = loadUsers();
 
-            if (users[username] && users[username].password === password) {
-                loggedInUser = username;
-                document.getElementById('usernameDisplay').textContent = `Username: ${loggedInUser}`;
-                alert('Login successful!');
-                hideModal(document.getElementById('loginModal'));
-                displayTweets();
-                return;
-            }
-
-            alert('Invalid username or password!');
+            // Handle login (if necessary)
+            loggedInUser = username;
+            document.getElementById('usernameDisplay').textContent = `Username: ${loggedInUser}`;
+            alert('Login successful!');
+            hideModal(document.getElementById('loginModal'));
         });
 
         // Create tweet functionality
         document.getElementById('tweetForm').addEventListener('submit', function(e) {
             e.preventDefault();
-            if (!loggedInUser) {
-                alert('You must be logged in to post a tweet.');
-                return;
-            }
 
             const title = document.getElementById('tweetTitle').value;
             const content = document.getElementById('tweetContent').value;
             const image = document.getElementById('tweetImage').files[0];
             const video = document.getElementById('tweetVideo').files[0];
-            const tweets = loadTweets();
             const tweet = {
-                username: loggedInUser,
+                username: loggedInUser || 'Anonymous',
                 title,
                 content,
-                image: image ? URL.createObjectURL(image) : null,
-                video: video ? URL.createObjectURL(video) : null,
                 timestamp: Date.now()
             };
 
-            tweets.push(tweet);
-            saveTweets(tweets);
-            alert('Tweet posted!');
-            hideModal(document.getElementById('tweetModal'));
-            displayTweets();
+            if (image) {
+                tweet.image = URL.createObjectURL(image);
+            }
+            if (video) {
+                tweet.video = URL.createObjectURL(video);
+            }
+
+            fetch(API_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(tweet)
+            }).then(response => response.json())
+              .then(data => {
+                  alert('Tweet posted!');
+                  hideModal(document.getElementById('tweetModal'));
+                  displayTweets();
+              }).catch(error => {
+                  alert('Failed to post tweet.');
+              });
         });
 
         // Display tweets
         function displayTweets() {
-            const tweets = loadTweets();
-            const tweetsContainer = document.getElementById('tweetsContainer');
-            tweetsContainer.innerHTML = '';
+            fetch(API_URL)
+                .then(response => response.json())
+                .then(tweets => {
+                    const tweetsContainer = document.getElementById('tweetsContainer');
+                    tweetsContainer.innerHTML = '';
 
-            tweets.forEach(tweet => {
-                const tweetElement = document.createElement('div');
-                tweetElement.className = 'tweet';
-                tweetElement.innerHTML = `
-                    <div class="tweet-title" onclick="toggleContent(this)">${tweet.title}</div>
-                    <div class="tweet-content">
-                        <p>${tweet.content}</p>
-                        ${tweet.image ? `<img src="${tweet.image}" alt="Tweet Image">` : ''}
-                        ${tweet.video ? `<video controls src="${tweet.video}"></video>` : ''}
-                        <p>Posted by ${tweet.username} at ${new Date(tweet.timestamp).toLocaleString()}</p>
-                    </div>
-                `;
-                tweetsContainer.appendChild(tweetElement);
-            });
+                    tweets.forEach(tweet => {
+                        const tweetElement = document.createElement('div');
+                        tweetElement.className = 'tweet';
+                        tweetElement.innerHTML = `
+                            <div class="tweet-title" onclick="toggleContent(this)">${tweet.title}</div>
+                            <div class="tweet-content">
+                                <p>${tweet.content}</p>
+                                ${tweet.image ? `<img src="${tweet.image}" alt="Tweet Image">` : ''}
+                                ${tweet.video ? `<video controls src="${tweet.video}"></video>` : ''}
+                                <p>Posted by ${tweet.username} at ${new Date(tweet.timestamp).toLocaleString()}</p>
+                            </div>
+                        `;
+                        tweetsContainer.appendChild(tweetElement);
+                    });
 
-            // Scroll to the bottom of the tweets container
-            tweetsContainer.scrollTop = tweetsContainer.scrollHeight;
+                    // Scroll to the bottom of the tweets container
+                    tweetsContainer.scrollTop = tweetsContainer.scrollHeight;
+                });
         }
 
         function toggleContent(element) {
@@ -431,11 +400,7 @@
         });
 
         document.getElementById('createTweetBtn').addEventListener('click', () => {
-            if (loggedInUser) {
-                showModal(document.getElementById('tweetModal'));
-            } else {
-                alert('You must be logged in to post a tweet.');
-            }
+            showModal(document.getElementById('tweetModal'));
         });
 
         document.getElementById('chatBtn').addEventListener('click', () => {
@@ -459,38 +424,12 @@
 
         document.getElementById('sendPrivateRequestBtn').addEventListener('click', () => {
             const requestUsername = document.getElementById('privateChatUsername').value;
-            const chats = loadChats();
-            const users = loadUsers();
-
-            if (!users[requestUsername]) {
-                alert('User not found!');
-                return;
-            }
-
-            if (!chats[loggedInUser]) {
-                chats[loggedInUser] = { requests: [], conversations: {} };
-            }
-
-            chats[loggedInUser].requests.push(requestUsername);
-            saveChats(chats);
-
             alert(`Request sent to ${requestUsername}`);
             document.getElementById('privateChatUsername').value = '';
         });
 
         function displayGlobalChat() {
-            const chats = loadChats();
-            const globalChatMessages = document.getElementById('globalChatMessages');
-            globalChatMessages.innerHTML = '';
-
-            Object.keys(chats).forEach(user => {
-                chats[user].conversations.forEach(message => {
-                    const messageElement = document.createElement('div');
-                    messageElement.className = 'chat-message';
-                    messageElement.innerHTML = `<span>${user}:</span> ${message}`;
-                    globalChatMessages.appendChild(messageElement);
-                });
-            });
+            // Global chat display logic here
         }
 
         document.getElementById('closeLoginModal').addEventListener('click', () => hideModal(document.getElementById('loginModal')));
